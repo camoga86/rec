@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Panel Repartidores</title>
+  <style>
+    /* Quitar márgenes y padding del body */
+    body {
+      margin: 0;
+      padding: 0;
+      /* Fondo transparente */
+      background: rgba(0, 0, 0, 0);
+      font-family: sans-serif;
+      color: #ffffff; /* Texto blanco (puedes cambiarlo) */
+    }
+
+    /* Un contenedor flotante para los datos */
+    .overlay-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      /* Si quieres un fondo semitransparente para la caja, puedes usar:
+         background: rgba(0, 0, 0, 0.5);
+         Si lo quieres totalmente transparente, pon 0 en la opacidad
+      */
+      background: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    /* Ejemplo de tabla (si prefieres un estilo de tarjetas, lo puedes hacer diferente) */
+    table {
+      border-collapse: collapse;
+      min-width: 300px;
+    }
+    th, td {
+      padding: 6px 12px;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay-container">
+    <h2>Datos de Repartidores</h2>
+    <table id="tablaRepartidores">
+      <thead>
+        <tr>
+          <th>Repartidor</th>
+          <th>Pedidos</th>
+          <th>Ganancias</th>
+          <th>Horas</th>
+          <th>Propinas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se llenará con JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Pega aquí la URL de tu Apps Script (doGet)
+    const API_URL = "TU_URL_DE_APPS_SCRIPT";
+
+    // Función para obtener datos del endpoint
+    async function getData() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json(); 
+        // 'data' debería ser un array de objetos como:
+        // [
+        //   { "fecha": "2024-12-24", "repartidor": "R1", "pedidos": 3, "ganancias": 25.5, "horasTrabajadas": 2, "propinas": 1.5 },
+        //   ...
+        // ]
+        renderData(data);
+      } catch (error) {
+        console.error("Error al obtener datos:", error);
+      }
+    }
+
+    // Función para renderizar en la tabla
+    function renderData(registros) {
+      const tbody = document.querySelector("#tablaRepartidores tbody");
+      tbody.innerHTML = ""; // Limpiar contenido previo
+
+      // 1) Podrías agrupar la información por repartidor y sumar valores.
+      //    O mostrar cada fila del historial. Depende de tu preferencia.
+      //    Aquí, como ejemplo, hacemos una agrupación por repartidor.
+      let agrupado = {};
+
+      registros.forEach(reg => {
+        const rep = reg.repartidor;
+        if (!agrupado[rep]) {
+          agrupado[rep] = {
+            pedidos: 0,
+            ganancias: 0,
+            horasTrabajadas: 0,
+            propinas: 0
+          };
+        }
+        // Sumamos los valores
+        agrupado[rep].pedidos += parseFloat(reg.pedidos) || 0;
+        agrupado[rep].ganancias += parseFloat(reg.ganancias) || 0;
+        agrupado[rep].horasTrabajadas += parseFloat(reg.horasTrabajadas) || 0;
+        agrupado[rep].propinas += parseFloat(reg.propinas) || 0;
+      });
+
+      // 2) Crear filas de tabla con el resultado
+      for (let repName in agrupado) {
+        let dataRep = agrupado[repName];
+
+        // Crear fila
+        let tr = document.createElement("tr");
+
+        let tdRepartidor = document.createElement("td");
+        tdRepartidor.textContent = repName;
+
+        let tdPedidos = document.createElement("td");
+        tdPedidos.textContent = dataRep.pedidos.toFixed(2);
+
+        let tdGanancias = document.createElement("td");
+        tdGanancias.textContent = dataRep.ganancias.toFixed(2);
+
+        let tdHoras = document.createElement("td");
+        tdHoras.textContent = dataRep.horasTrabajadas.toFixed(2);
+
+        let tdPropinas = document.createElement("td");
+        tdPropinas.textContent = dataRep.propinas.toFixed(2);
+
+        tr.append(tdRepartidor, tdPedidos, tdGanancias, tdHoras, tdPropinas);
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Llamamos a la función al cargar la página
+    getData();
+
+    // Si quieres refrescar cada X segundos (por ejemplo, 5s):
+    setInterval(getData, 5000);
+  </script>
+</body>
+</html>
